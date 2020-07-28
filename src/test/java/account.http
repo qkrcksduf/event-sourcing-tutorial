@@ -1,0 +1,69 @@
+POST http://localhost:8080/accounts
+Content-Type: application/json
+
+{
+  "currency": "USD",
+  "startingBalance": 20
+}
+
+> {%
+  client.test("계정을 등록하고 활성화합니다.", function() {
+      client.assert(response.status === 200, "Response status is not 200");
+      client.assert(response.contentType.mimeType === "text/plain",
+      "Expected 'text/plain' but received '" + response.contentType.mimeType + "'");
+      client.global.set("account_id", response.body.toString());
+  });
+%}
+
+###
+
+PUT http://localhost:8080/accounts/debits/{{account_id}}
+Content-Type: application/json
+
+{
+  "currency": "USD",
+  "debitAmount": 40
+}
+
+> {%
+  client.test("계정에서 40 USD를 출금합니다.", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+  });
+%}
+
+###
+
+PUT http://localhost:8080/accounts/credits/{{account_id}}
+Content-Type: application/json
+
+{
+  "currency": "USD",
+  "creditAmount": 100
+}
+
+> {%
+ client.test("계정에 100 USD를 입금합니다.", function() {
+   client.assert(response.status === 200, "response status is not 200")
+ })
+%}
+
+###
+GET http://localhost:8080/accounts/{{account_id}}/events
+Accept: application/json
+
+> {%
+  client.test("계정의 전체 이벤트를 조회합니다.", function() {
+    client.assert(response.status === 200, "Response status is not 200")
+  })
+%}
+
+###
+GET http://localhost:8080/accounts/{{account_id}}
+Accept: application/json
+
+> {%
+  client.test("계정의 CQRS로 최종 개정정보를 조회합니다.", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+    client.assert(response.body.accountBalance === 80.0, "The account balance is not 80.0")
+  });
+%}
